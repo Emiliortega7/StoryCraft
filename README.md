@@ -1,1 +1,1 @@
-# StoryCraft
+StoryCraft is a Flask-based web application designed to provide an interactive platform for storytelling and creative writing. This repository contains the foundational Python script necessary to initialize the Flask application, establish essential routes, and commence the server operations. It serves as the backbone for StoryCraft, facilitating a seamless user experience for both story creators and readers.
