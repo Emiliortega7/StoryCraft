@@ -1,3 +1,4 @@
+from flask import Flask, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 import os
@@ -5,7 +6,11 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-db = SQLAlchemy()
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URI')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+db = SQLAlchemy(app)
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -36,9 +41,23 @@ class Choice(db.Model):
     def __repr__(self):
         return '<Choice %r>' % self.description
 
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URI')
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db.init_app(app)
+@app.before_first_request
+def create_tables():
+    try:
+        db.create_all()
+    except Exception as e:
+        app.logger.error(f"Error creating tables: {e}")
+
+@app.route('/stories', methods=['GET'])
+def get_stories():
+    try:
+        stories = Story.query.all()
+        return jsonify([{'title': story.title, 'content': story.content} for story in stories])
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    try:
+        app.run(debug=True)
+    except Exception as e:
+        print(f"Failed to start Flask application: {e}")
