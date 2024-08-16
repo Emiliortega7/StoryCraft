@@ -2,50 +2,46 @@ from flask import Flask, request, jsonify
 import json
 from dotenv import load_dotenv
 
-# Load environment variables
 load_dotenv()
 
 app = Flask(__name__)
 
-# Initial data for the API
-stories = [{
+available_stories = [{
     "id": 1,
     "title": "The Adventure Begins",
     "content": "Your adventure starts in a small town..."
 }]
 
-choices = [{
+story_choices = [{
     "id": 1,
     "story_id": 1,
     "description": "Enter the forest",
     "next_story_id": 2
 }]
 
-# Common functions to find story or choice by ID
-def find_story_by_id(story_id):
-    return next((story for story in stories if story["id"] == story_id), None)
+def get_story_by_id(story_id):
+    return next((story for story in available_stories if story["id"] == story_id), None)
 
-def find_choice_by_id(choice_id):
-    return next((choice for choice in choices if choice["id"] == choice_id), None)
+def get_choice_by_id(choice_id):
+    return next((choice for choice in story_choices if choice["id"] == choice_id), None)
 
-# Route to handle operations with stories
 @app.route('/stories', methods=['GET', 'POST'])
-def handle_stories():
+def stories_operations():
     if request.method == 'GET':
-        return jsonify(stories)
+        return jsonify(available_stories)
     elif request.method == 'POST':
         data = request.get_json()
         new_story = {
-            "id": len(stories) + 1,
+            "id": len(available_stories) + 1,
             "title": data['title'],
             "content": data['content']
         }
-        stories.append(new_story)
+        available_stories.append(new_story)
         return jsonify(new_story), 201
 
 @app.route('/stories/<int:id>', methods=['GET', 'PUT', 'DELETE'])
-def handle_story(id):
-    story = find_story_by_id(id)
+def manage_story(id):
+    story = get_story_by_id(id)
     if request.method == 'GET':
         return jsonify(story) if story else ("Story not found", 404)
     elif request.method == 'PUT':
@@ -60,30 +56,29 @@ def handle_story(id):
             return "Story not found", 404
     elif request.method == 'DELETE':
         if story:
-            stories.remove(story)
+            available_stories.remove(story)
             return '', 204
         else:
             return "Story not found", 404
 
-# Route to handle operations with choices
 @app.route('/choices', methods=['GET', 'POST'])
-def handle_choices():
+def choices_operations():
     if request.method == 'GET':
-        return jsonify(choices)
+        return jsonify(story_choices)
     elif request.method == 'POST':
         data = request.get_json()
         new_choice = {
-            "id": len(choices) + 1,
+            "id": len(story_choices) + 1,
             "story_id": data['story_id'],
             "description": data['description'],
             "next_story_id": data['next_story_id']
         }
-        choices.append(new_choice)
+        story_choices.append(new_choice)
         return jsonify(new_choice), 201
 
 @app.route('/choices/<int:id>', methods=['GET', 'PUT', 'DELETE'])
-def handle_choice(id):
-    choice = find_choice_by_id(id)
+def manage_choice(id):
+    choice = get_choice_by_id(id)
     if request.method == 'GET':
         return jsonify(choice) if choice else ("Choice not found", 404)
     elif request.method == 'PUT':
@@ -99,7 +94,7 @@ def handle_choice(id):
             return "Choice not found", 404
     elif request.method == 'DELETE':
         if choice:
-            choices.remove(choice)
+            story_choices.remove(choice)
             return '', 204
         else:
             return "Choice not found", 404
