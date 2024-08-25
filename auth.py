@@ -1,20 +1,24 @@
 from datetime import timedelta
 from flask import Flask, jsonify, request
-from flask_sqlalchemy import SQLAlchemy
+from flask_sqlalchemy import SQLAlchemy, scoped_session
+from sqlalchemy.orm import sessionmaker
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import JWTManager, create_access_token, create_refresh_token, jwt_required, get_jwt_identity
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # Disable Flask-SQLAlchemy event system
 app.config['SECRET_KEY'] = 'your_secret_key'
 app.config['JWT_SECRET_KEY'] = 'jwt_secret_key'
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)
 app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(days=30)
 
 db = SQLAlchemy(app)
+db_session = scoped_session(sessionmaker(autocommit=False, autoflush=False, bind=db.engine))
 jwt = JWTManager(app)
 
 class User(db.Model):
+    __tablename__ = 'users'  # Explicit table name definition
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
     password_hash = db.Column(db.String(128))
@@ -28,6 +32,10 @@ class User(db.Model):
 @app.before_first_request
 def create_tables():
     db.create_all()
+
+@app.teardown_appcontext
+def remove_session(exception=None):
+    db_session.remove()  # Make sure the session is removed at the end of the request or application context
 
 @app.route('/register', methods=['POST'])
 def register():
