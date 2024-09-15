@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, MetaData
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, MetaData, or_
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.exc import SQLAlchemyError
@@ -40,10 +40,22 @@ class DatabaseManager:
         if self.session:
             self.session.close()
 
+    # New method to query entries by name
+    def query_entries_by_name(self, name):
+        session = self.get_session()
+        try:
+            result = session.query(ExampleModel).filter(or_(ExampleModel.name == name)).all()
+            return result
+        except SQLAlchemyError as e:
+            print(f"Query error: {e}")
+            session.rollback()
+            return None
+
 if __name__ == "__main__":
     db_manager = DatabaseManager()
     db_manager.initialize_db()
 
+    # Adding a new entry
     session = db_manager.get_session()
     new_entry = ExampleModel(name="Example Entry")
     session.add(new_entry)
@@ -55,3 +67,9 @@ if __name__ == "__main__":
         session.rollback()
     finally:
         db_manager.close_session()
+
+    # Querying entries by name
+    queried_entries = db_manager.query_entries_by_name("Example Entry")
+    if queried_entries:
+        for entry in queried_entries:
+            print(f"Queried Entry: ID: {entry.id} | Name: {entry.name} | Created at: {entry.created_at}")
