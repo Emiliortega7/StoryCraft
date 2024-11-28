@@ -3,116 +3,116 @@ import React, { useState, useCallback } from 'react';
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false, errorInfo: null };
   }
 
   static getDerivedStateFromError(error) {
-    return { hasError: true, error };
+    return { hasError: true, errorInfo: error };
   }
 
-  componentDidCatch(error, errorInfo) {
-    console.log(error, errorInfo);
+  componentDidCatch(error, info) {
+    console.log(error, info);
   }
 
   render() {
     if (this.state.hasError) {
-      return <h1>Something went wrong.</h1>;
+      return <h1>An error occurred in the application.</h1>;
     }
 
     return this.props.children; 
   }
 }
 
-const InteractiveStoryEditor = () => {
-  const [story, setStory] = useState({
+const StoryEditor = () => {
+  const [storyData, setStoryData] = useState({
     title: '',
-    content: '',
-    choices: [{ id: 1, text: '', nextPart: '' }],
+    narrative: '',
+    decisions: [{ id: 1, option: '', followUp: '' }],
   });
 
-  const handleChange = useCallback((e) => {
+  const handleStoryChange = useCallback((e) => {
     const { name, value } = e.target;
     try {
-      setStory({ ...story, [name]: value });
+      setStoryData({ ...storyData, [name]: value });
     } catch (error) {
-      console.error("Failed to update story:", error);
+      console.error("Failed to update story data:", error);
     }
-  }, [story]);
+  }, [storyData]);
 
-  const handleChoiceChange = useCallback((index, e) => {
+  const handleDecisionChange = useCallback((decisionIndex, e) => {
     const { name, value } = e.target;
     try {
-      const choices = [...story.choices];
-      choices[index] = { ...choices[index], [name]: value };
-      setStory({ ...story, choices });
+      const updatedDecisions = [...storyData.decisions];
+      updatedDecisions[decisionIndex] = { ...updatedDecisions[decisionIndex], [name]: value };
+      setStoryData({ ...storyData, decisions: updatedDecisions });
     } catch (error) {
-      console.error(`Failed to update choice ${index}:`, error);
+      console.error(`Failed to update decision ${decisionIndex}:`, error);
     }
-  }, [story]);
+  }, [storyData]);
 
-  const addChoice = useCallback(() => {
+  const addNewDecision = useCallback(() => {
     try {
-      const newChoice = { id: story.choices.length + 1, text: '', nextPart: '' };
-      setStory({ ...story, choices: [...story.choices, newChoice] });
+      const newDecision = { id: storyData.decisions.length + 1, option: '', followUp: '' };
+      setStoryData({ ...storyData, decisions: [...storyData.decisions, newDecision] });
     } catch (error) {
-      console.error("Failed to add a new choice:", error);
+      console.error("Failed to add new decision:", error);
     }
-  }, [story]);
+  }, [storyData]);
 
-  const removeChoice = useCallback((index) => {
+  const removeDecision = useCallback((decisionIndex) => {
     try {
-      const choices = story.choices.filter((_, i) => i !== index);
-      setStory({ ...story, choices });
+      const filteredDecisions = storyData.decisions.filter((_, i) => i !== decisionIndex);
+      setStoryData({ ...storyData, decisions: filteredDecisions });
     } catch (error) {
-      console.error(`Failed to remove choice ${index}:`, error);
+      console.error(`Failed to remove decision ${decisionIndex}:`, error);
     }
-  }, [story]);
+  }, [storyData]);
 
   return (
     <ErrorBoundary>
       <div>
-        <h2>Create/Edit Your Interactive Story</h2>
+        <h2>Interactive Story Creation/Editing Tool</h2>
         <form>
           <div>
             <label>Title:</label>
             <input
               type="text"
               name="title"
-              value={story.title}
-              onChange={handleChange}
+              value={storyData.title}
+              onChange={handleStoryChange}
             />
           </div>
           <div>
-            <label>Story Content:</label>
+            <label>Narrative:</label>
             <textarea
-              name="content"
-              value={story.content}
-              onChange={handleChange}
+              name="narrative"
+              value={storyData.narrative}
+              onChange={handleStoryChange}
             />
           </div>
-          {story.choices.map((choice, index) => (
-            <div key={choice.id}>
-              <label>Choice {index + 1}:</label>
+          {storyData.decisions.map((decision, index) => (
+            <div key={decision.id}>
+              <label>Decision {index + 1}:</label>
               <input
                 type="text"
-                name="text"
-                value={choice.text}
-                onChange={(e) => handleChoiceChange(index, e)}
+                name="option"
+                value={decision.option}
+                onChange={(e) => handleDecisionChange(index, e)}
               />
               <input
                 type="text"
-                name="nextPart"
-                value={choice.nextPart}
-                onChange={(e) => handleChoiceChange(index, e)}
+                name="followUp"
+                value={decision.followUp}
+                onChange={(e) => handleDecisionChange(index, e)}
               />
-              <button type="button" onClick={() => removeChoice(index)}>Remove</button>
+              <button type="button" onClick={() => removeDecision(index)}>Remove Decision</button>
             </div>
           ))}
-          <button type="button" onClick={addChoice}>Add Choice</button>
+          <button type="button" onClick={addNewDecision}>Add New Decision</button>
         </form>
       </div>
     </ErrorBoundary>
   );
 };
 
-export default InteractiveStoryEditor;
+export default StoryEditor;
