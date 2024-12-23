@@ -36,23 +36,17 @@ function StoryViewer() {
 
   const selectChoice = (choiceId) => {
     const nextStory = stories.find(story => story.id === choiceId);
-    if (nextStory) {
-      setCurrentStory(nextStory);
-    }
+    setCurrentStory(nextStory || currentStory);
   };
 
   return (
     <div className="story-viewer">
       <p>{currentStory.text}</p>
-      {currentStory.choices.length > 0 && (
-        <div className="choices">
-          {currentStory.choices.map((choice, index) => (
-            <button key={index} onClick={() => selectChoice(choice.leadsTo)}>
-              {choice.text}
-            </button>
-          ))}
-        </div>
-      )}
+      {currentStory.choices.length > 0 && currentStory.choices.map((choice) => (
+        <button key={choice.leadsTo} onClick={() => selectChoice(choice.leadsTo)}>
+          {choice.text}
+        </button>
+      ))}
     </div>
   );
 }
